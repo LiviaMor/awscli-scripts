@@ -50,6 +50,8 @@ eval "$(./desafio01/set-aws-temp-creds.sh)"
 ./desafio01/script-ec2.sh              # Criar instâncias
 ./desafio01/describe-ec2-instances.sh   # Listar instâncias
 ./desafio01/stop-ec2.sh                # Parar instância (interativo)
+./desafio01/start-ec2.sh               # Iniciar instância (interativo)
+./desafio01/terminate-ec2.sh           # Terminar instância (interativo)
 ```
 
 ## Nota
