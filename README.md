@@ -18,6 +18,9 @@ Roda `aws ec2 run-instances` para iniciar instâncias EC2 com tags e parâmetros
 ### `desafio01/2script-ec2.sh`
 Lista instâncias EC2 que usam a tag `grupo=AutomacaoAWSCLI`, assumindo uma role temporária para garantir que as credenciais estejam sempre válidas.
 
+### `desafio01/stop-ec2.sh`
+Lista as instâncias EC2 disponíveis e permite ao usuário escolher uma instância para parar, perguntando o ID da instância.
+
 ### `desafio01/set-aws-temp-creds.sh`
 Gera e exporta variáveis de ambiente (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`) ao assumir uma role via STS.
 
@@ -39,9 +42,9 @@ eval "$(./desafio01/set-aws-temp-creds.sh)"
 3. Execute o script que você precisar:
 
 ```bash
-./desafio01/script-ec2.sh
-# ou
-./desafio01/2script-ec2.sh
+./desafio01/script-ec2.sh      # Criar instâncias
+./desafio01/2script-ec2.sh     # Listar instâncias
+./desafio01/stop-ec2.sh        # Parar instância (interativo)
 ```
 
 ## Nota
