@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# Este script assume uma role temporária, lista as instâncias EC2 disponíveis e permite ao usuário escolher uma instância para parar.
 # Assumir a role temporária
 ROLE_CREDENTIALS=$(aws sts assume-role \
   --role-arn arn:aws:iam::794038217446:role/role-time-dev \

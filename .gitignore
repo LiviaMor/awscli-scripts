@@ -1,0 +1,21 @@
+# Credenciais AWS
+.env.aws
+*.pem
+*.key
+
+# Terraform
+**/.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+
+# Keys
+keys/
+
+# Node
+node_modules/
+desafio01/client/bia/
+desafio02/bia/

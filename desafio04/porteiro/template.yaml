@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  porteiro
+
+  Sample SAM Template for porteiro
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    LoggingConfig:
+      LogFormat: JSON
+Resources:
+  LigarPorteiroFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hello-world/
+      Handler: src/handlers/porteiro.startEC2Instance
+      Runtime: nodejs24.x
+      Architectures:
+      - x86_64
+      Events:
+        CloudWatchEvent:
+          Type: Schedule # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+              Schedule: cron(50 , 10, ? * MON-FRI *)  # This schedule will trigger the function at 10:50 UTC every day
+      Policies:
+        - Statement:
+          - Sid: StartEC2Instance
+            Effect: Allow
+            Action:
+              - ec2:StartInstances
+            Resource: "*"
+  DesligarPorteiroFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: 
+    Properties:
+      Handler: src/handlers/porteiro.stopEC2Instance
+      Runtime: nodejs24.x
+      Architectures:
+      - x86_64
+      CodeUri: hello-world/
+      Events:
+        CloudWatchEvent:
+          Type: Schedule # More info about API Event Source:  
+          Properties:
+              Schedule: cron(10, 21, ? * MON-FRI *)  # This schedule will trigger the function at 18:00 UTC every day
+      Policies: 
+        - Statement:
+          - Sid: StopEC2Instance
+            Effect: Allow
+            Action:
+              - ec2:StopInstances
+            Resource: "*"

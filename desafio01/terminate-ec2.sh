@@ -1,13 +1,7 @@
 #!/bin/bash
 # Este script assume uma role temporária, lista as instâncias EC2 disponíveis e permite ao usuário escolher uma instância para terminar.
 
-# Assumir a role temporária
-ROLE_CREDENTIALS=$(aws sts assume-role \
-  --role-arn arn:aws:iam::794038217446:role/role-time-dev \
-  --role-session-name vm-livia \
-  --profile awscli \
-  --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-  --output text)
+
 
 read -r AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN <<< "$ROLE_CREDENTIALS"
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN

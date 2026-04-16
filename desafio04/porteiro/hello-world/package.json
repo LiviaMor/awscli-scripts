@@ -1,0 +1,8 @@
+{
+  "name": "porteiro",
+  "version": "1.0.0",
+  "main": "src/handlers/porteiro.js",
+  "dependencies": {
+    "@aws-sdk/client-ec2": "^3.0.0"
+  }
+}

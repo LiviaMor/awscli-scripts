@@ -12,7 +12,7 @@
 set -euo pipefail
 
 PROFILE=${1:-awscli}
-ROLE_ARN=${2:-arn:aws:iam::794038217446:role/role-acesso-ssm}
+ROLE_ARN=${2:-arn:aws:iam::794038217446:role/role-time-dev}
 SESSION_NAME=${3:-vm-livia}
 
 # Get temporary credentials
@@ -30,8 +30,8 @@ fi
 
 read -r AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN <<< "$CREDENTIALS"
 
-export AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY
-export AWS_SESSION_TOKEN
-
-echo "Credenciais exportadas para role: ${ROLE_ARN}"
+cat <<EOF
+export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+EOF
