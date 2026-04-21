@@ -11,9 +11,4 @@ terraform {
 provider "aws" {
   region  = "us-east-1"
   profile = "awscli"
-
-  assume_role {
-    role_arn     = "arn:aws:iam::794038217446:role/role-time-dev"
-    session_name = "terraform-session"
-  }
 }
