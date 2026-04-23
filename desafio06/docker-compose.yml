@@ -3,10 +3,10 @@ services:
     build: .
     container_name: processar-sqs
     environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
       AWS_DEFAULT_REGION: us-east-1
-      QUEUE_URL: ${QUEUE_URL}
+      QUEUE_URL: https://sqs.us-east-1.amazonaws.com/794038217446/formacao-mensageria
+    # Monta as credenciais do profile awscli para uso local
+    volumes:
+      - ~/.aws:/root/.aws:ro
     # Para modo contínuo, o container fica rodando
     restart: unless-stopped

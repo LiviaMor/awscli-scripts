@@ -1,21 +1,17 @@
 #!/bin/bash
-# Processa mensagens da fila SQS
-# Exibe mensagem, tempo de processamento, e exclui após processar
-# Uso: ./processar-mensagem-sqs.sh [URL_DA_FILA]
+# Processador de mensagens SQS
+# Roda em loop contínuo com long polling (20s)
+# Sem dependência de Python — usa apenas jq
 
-REGION="us-east-1"
-export AWS_PROFILE=awscli
-unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+REGION="${AWS_DEFAULT_REGION:-us-east-1}"
+QUEUE_URL="${QUEUE_URL}"
 
-QUEUE_URL=$1
+# Usar profile awscli se disponível (local), senão usa role da task (ECS)
+if [[ -f /root/.aws/credentials || -f ~/.aws/credentials ]]; then
+  export AWS_PROFILE=${AWS_PROFILE:-awscli}
+fi
 
-echo "=========================================="
-echo "   Processador de Mensagens SQS"
-echo "=========================================="
-
-# Se não passou URL como argumento, perguntar
 if [[ -z "$QUEUE_URL" ]]; then
-  echo ""
   echo "Filas disponíveis:"
   aws sqs list-queues --region $REGION --query 'QueueUrls[]' --output text 2>/dev/null | tr '\t' '\n' | while read Q; do
     MSGS=$(aws sqs get-queue-attributes --queue-url "$Q" --attribute-names ApproximateNumberOfMessages --region $REGION --query 'Attributes.ApproximateNumberOfMessages' --output text 2>/dev/null)
@@ -23,44 +19,59 @@ if [[ -z "$QUEUE_URL" ]]; then
   done
   echo ""
   read -p "URL da fila: " QUEUE_URL
-  [[ -z "$QUEUE_URL" ]] && echo "Erro: URL obrigatória." && exit 1
+  [[ -z "$QUEUE_URL" ]] && echo "❌ URL obrigatória." && exit 1
 fi
 
+echo "=========================================="
+echo "   Processador de Mensagens SQS"
+echo "=========================================="
+echo "Fila: $QUEUE_URL"
+echo "Região: $REGION"
+echo "Aguardando mensagens (long polling 20s)..."
 echo ""
-echo "1) Processar uma mensagem"
-echo "2) Processar todas as mensagens"
-echo "3) Modo contínuo (polling)"
-echo ""
-read -p "Escolha: " MODO
 
-processar_mensagem() {
-  local RESULT=$1
-  local BODY=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['Messages'][0]['Body'])" 2>/dev/null)
-  local RECEIPT=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['Messages'][0]['ReceiptHandle'])" 2>/dev/null)
-  local MSG_ID=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['Messages'][0]['MessageId'])" 2>/dev/null)
+TOTAL=0
 
-  if [[ -z "$RECEIPT" ]]; then
-    return 1
+while true; do
+  RESPONSE=$(aws sqs receive-message \
+    --queue-url "$QUEUE_URL" \
+    --max-number-of-messages 1 \
+    --wait-time-seconds 20 \
+    --attribute-names All \
+    --region $REGION \
+    --output json 2>/dev/null)
+
+  # Verificar se response está vazio ou sem mensagens
+  if [[ -z "$RESPONSE" ]] || ! echo "$RESPONSE" | jq -e '.Messages[0]' > /dev/null 2>&1; then
+    echo "⏳ $(date '+%H:%M:%S') | Nenhuma mensagem. Aguardando..."
+    continue
   fi
 
-  # Início do processamento
-  local START=$(date +%s%N)
+  # Extrair dados com jq
+  MSG_ID=$(echo "$RESPONSE" | jq -r '.Messages[0].MessageId')
+  MSG_BODY=$(echo "$RESPONSE" | jq -r '.Messages[0].Body')
+  RECEIPT=$(echo "$RESPONSE" | jq -r '.Messages[0].ReceiptHandle')
+
+  # Exibir mensagem
   echo "──────────────────────────────────────"
-  echo "📩 Mensagem recebida"
+  echo "📩 $(date '+%H:%M:%S') | Mensagem recebida"
   echo "   ID: $MSG_ID"
-  echo "   Conteúdo: $BODY"
+  echo "   Conteúdo: $MSG_BODY"
+
+  # Iniciar processamento
+  START=$(date +%s%N)
   echo "   ⏳ Processando..."
 
-  # Simula processamento (aqui você coloca a lógica real)
+  # === LÓGICA DE PROCESSAMENTO AQUI ===
   sleep 1
+  # =====================================
 
-  # Fim do processamento
-  local END=$(date +%s%N)
-  local DURATION=$(( (END - START) / 1000000 ))
-
+  # Calcular tempo
+  END=$(date +%s%N)
+  DURATION=$(( (END - START) / 1000000 ))
   echo "   ⏱️  Tempo de processamento: ${DURATION}ms"
 
-  # Deletar mensagem da fila
+  # Excluir mensagem da fila
   aws sqs delete-message \
     --queue-url "$QUEUE_URL" \
     --receipt-handle "$RECEIPT" \
@@ -69,91 +80,9 @@ processar_mensagem() {
   if [[ $? -eq 0 ]]; then
     echo "   ✅ Mensagem processada e excluída da fila!"
   else
-    echo "   ❌ Erro ao excluir mensagem da fila"
+    echo "   ❌ Erro ao excluir mensagem"
   fi
 
-  return 0
-}
-
-case $MODO in
-  1)
-    echo ""
-    echo "Buscando mensagem..."
-    RESULT=$(aws sqs receive-message \
-      --queue-url "$QUEUE_URL" \
-      --max-number-of-messages 1 \
-      --wait-time-seconds 5 \
-      --attribute-names All \
-      --region $REGION --output json 2>/dev/null)
-
-    if [[ -z "$RESULT" || $(echo "$RESULT" | grep -c "Messages") -eq 0 ]]; then
-      echo "Nenhuma mensagem na fila."
-      exit 0
-    fi
-
-    processar_mensagem "$RESULT"
-    ;;
-
-  2)
-    echo ""
-    echo "Processando todas as mensagens..."
-    TOTAL=0
-    while true; do
-      RESULT=$(aws sqs receive-message \
-        --queue-url "$QUEUE_URL" \
-        --max-number-of-messages 10 \
-        --wait-time-seconds 3 \
-        --attribute-names All \
-        --region $REGION --output json 2>/dev/null)
-
-      if [[ -z "$RESULT" || $(echo "$RESULT" | grep -c "Messages") -eq 0 ]]; then
-        break
-      fi
-
-      # Processar cada mensagem do lote
-      COUNT=$(echo "$RESULT" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('Messages',[])))" 2>/dev/null)
-      for i in $(seq 0 $((COUNT-1))); do
-        SINGLE=$(echo "$RESULT" | python3 -c "
-import sys,json
-data=json.load(sys.stdin)
-msg=data['Messages'][$i]
-print(json.dumps({'Messages':[msg]}))" 2>/dev/null)
-        processar_mensagem "$SINGLE"
-        TOTAL=$((TOTAL+1))
-      done
-    done
-    echo ""
-    echo "=========================================="
-    echo "✅ Total processado: $TOTAL mensagens"
-    echo "=========================================="
-    ;;
-
-  3)
-    echo ""
-    echo "Modo contínuo (Ctrl+C para parar)..."
-    echo ""
-    TOTAL=0
-    while true; do
-      RESULT=$(aws sqs receive-message \
-        --queue-url "$QUEUE_URL" \
-        --max-number-of-messages 1 \
-        --wait-time-seconds 20 \
-        --attribute-names All \
-        --region $REGION --output json 2>/dev/null)
-
-      if [[ -z "$RESULT" || $(echo "$RESULT" | grep -c "Messages") -eq 0 ]]; then
-        echo "⏳ Aguardando mensagens... ($(date '+%H:%M:%S'))"
-        continue
-      fi
-
-      processar_mensagem "$RESULT"
-      TOTAL=$((TOTAL+1))
-      echo "   📊 Total processado: $TOTAL"
-    done
-    ;;
-
-  *)
-    echo "Opção inválida."
-    exit 1
-    ;;
-esac
+  TOTAL=$((TOTAL+1))
+  echo "   📊 Total processado: $TOTAL"
+done
