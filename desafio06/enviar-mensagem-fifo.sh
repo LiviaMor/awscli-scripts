@@ -13,7 +13,7 @@ echo "=========================================="
 # Se não tem QUEUE_URL, listar filas FIFO
 if [[ -z "$QUEUE_URL" ]]; then
   echo "Filas FIFO disponíveis:"
-  aws sqs list-queues --region $REGION --query 'QueueUrls[]' --output text 2>/dev/null | tr '\t' '\n' | while read Q; do
+  aws sqs list-queues --region "$REGION" --query 'QueueUrls[]' --output text 2>/dev/null | tr '\t' '\n' | while read Q; do
     [[ "$Q" == *.fifo ]] && echo "  📨 $Q"
   done
   echo ""
@@ -41,7 +41,7 @@ case $OPCAO in
       --message-body "$MSG" \
       --message-group-id "$GROUP_ID" \
       --message-deduplication-id "$(date +%s%N)" \
-      --region $REGION
+      --region "$REGION"
     echo "✅ Mensagem enviada! (grupo: $GROUP_ID)"
     ;;
 
@@ -50,14 +50,14 @@ case $OPCAO in
     [[ -z "$GROUP_ID" ]] && echo "❌ GroupId obrigatório." && exit 1
     read -p "Quantas mensagens? " QTD
     [[ -z "$QTD" ]] && echo "❌ Quantidade obrigatória." && exit 1
-    for i in $(seq 1 $QTD); do
+    for i in $(seq 1 "$QTD"); do
       MSG="Mensagem FIFO #$i - $(date '+%H:%M:%S')"
       aws sqs send-message \
         --queue-url "$QUEUE_URL" \
         --message-body "$MSG" \
         --message-group-id "$GROUP_ID" \
         --message-deduplication-id "$(date +%s%N)-$i" \
-        --region $REGION \
+        --region "$REGION" \
         --output text --query 'MessageId'
       echo "  ✅ Enviada: $MSG (grupo: $GROUP_ID, ordem: $i)"
     done
@@ -76,7 +76,7 @@ case $OPCAO in
       --message-body "$JSON_MSG" \
       --message-group-id "$GROUP_ID" \
       --message-deduplication-id "$(date +%s%N)" \
-      --region $REGION
+      --region "$REGION"
     echo "✅ Mensagem JSON enviada! (grupo: $GROUP_ID)"
     ;;
 

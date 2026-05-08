@@ -25,21 +25,85 @@ echo "  ╚═══════════════════════
 echo -e "${NC}"
 echo ""
 
+
 # ============================================================
-# CENA 1: Mostrar que o ambiente está pronto
+# CENA 1: Conversa com o Kiro — acesso e permissões
 # ============================================================
-echo -e "${CYAN}━━━ CENA 1: Verificando o ambiente ━━━${NC}"
+clear
+echo -e "${CYAN}━━━ CENA 1: Conversando com o Kiro ━━━${NC}"
 echo ""
-
-echo -e "${YELLOW}Comando:${NC} aws --version"
-aws --version
+echo -e "${YELLOW}💬 Fala:${NC} \"Vou abrir o Kiro e conversar com ele como se fosse"
+echo "   minha primeira vez usando AWS. Olhem como é natural.\""
 echo ""
-
-echo -e "${YELLOW}Comando:${NC} kiro --version"
-kiro --version 2>/dev/null || echo "kiro-cli/1.x.x"
+echo -e "${YELLOW}Comando:${NC} kiro chat"
 echo ""
-
-echo -e "${GREEN}✅ Ambiente pronto! Duas ferramentas, prontas para decolar.${NC}"
+echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "${GREEN}👩 Você:${NC}"
+echo "  Kiro, nunca usei AWS pelo terminal. Como faço para ter"
+echo "  acesso à minha conta? Preciso de alguma permissão especial?"
+echo ""
+echo -e "${CYAN}🤖 Kiro:${NC}"
+echo "  Claro! Para acessar sua conta AWS pelo terminal, você precisa"
+echo "  de algumas coisas configuradas. Vou te explicar:"
+echo ""
+echo "  1. **IAM User** — É sua identidade na AWS. Você cria um usuário"
+echo "     no serviço IAM e ele recebe credenciais (Access Key ID +"
+echo "     Secret Access Key) para autenticar no terminal."
+echo ""
+echo "  2. **IAM Policy** — É um documento JSON que define O QUE você"
+echo "     pode fazer. Sem policy, seu usuário existe mas não faz nada."
+echo "     Exemplo: para criar um banco de dados, precisa de permissão"
+echo "     em \"rds:CreateDBInstance\"."
+echo ""
+echo "  3. **IAM Role** — Identidade temporária. Em vez de usar suas"
+echo "     chaves permanentes, você \"assume\" uma role via STS e recebe"
+echo "     credenciais que expiram. Mais seguro!"
+echo ""
+echo "  4. **STS (Security Token Service)** — Serviço que gera essas"
+echo "     credenciais temporárias. Ideal para não deixar chaves fixas."
+echo ""
+echo "  5. **Princípio do Menor Privilégio** — Dê ao usuário APENAS as"
+echo "     permissões que ele precisa. Nada mais."
+echo ""
+echo "  Para começar, rode: aws configure"
+echo "  Depois valide com: aws sts get-caller-identity"
+echo ""
+echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "${GREEN}👩 Você:${NC}"
+echo "  E quais permissões eu preciso pra criar um banco de dados RDS?"
+echo ""
+echo -e "${CYAN}🤖 Kiro:${NC}"
+echo "  Para criar um RDS PostgreSQL com segurança, seu usuário precisa"
+echo "  dessas permissões mínimas:"
+echo ""
+echo '  {'
+echo '    "Version": "2012-10-17",'
+echo '    "Statement": [{'
+echo '      "Effect": "Allow",'
+echo '      "Action": ['
+echo '        "rds:CreateDBInstance", "rds:DescribeDBInstances",'
+echo '        "rds:DeleteDBInstance", "rds:CreateDBSubnetGroup",'
+echo '        "ec2:DescribeVpcs", "ec2:DescribeSubnets",'
+echo '        "ec2:DescribeSecurityGroups", "ec2:CreateSecurityGroup",'
+echo '        "ec2:AuthorizeSecurityGroupIngress"'
+echo '      ],'
+echo '      "Resource": "*"'
+echo '    }]'
+echo '  }'
+echo ""
+echo "  ⚠️  Nunca use a conta root! Crie um usuário IAM dedicado."
+echo "  Se quiser, posso criar essa policy pra você agora."
+echo ""
+echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "${YELLOW}💬 Fala:${NC} \"Viram? Perguntei em português, sem saber nada, e o Kiro"
+echo "   me explicou IAM, policies, roles, STS e já me deu o JSON"
+echo "   pronto. Vamos validar que estou autenticada:\""
+echo ""
+echo -e "${YELLOW}Comando:${NC} aws sts get-caller-identity"
+aws sts get-caller-identity 2>/dev/null || echo -e "${RED}⚠️  Credenciais não configuradas!${NC}"
 echo ""
 read -p "⏸️  [Pressione ENTER para continuar a demo...]"
 

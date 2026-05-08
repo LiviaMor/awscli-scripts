@@ -8,5 +8,4 @@ services:
     # Monta as credenciais do profile awscli para uso local
     volumes:
       - ~/.aws:/root/.aws:ro
-    # Para modo contínuo, o container fica rodando
-    restart: unless-stopped
+    command: ["./processar-mensagens.sh"]

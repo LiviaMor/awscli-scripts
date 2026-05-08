@@ -13,9 +13,9 @@ fi
 
 if [[ -z "$QUEUE_URL" ]]; then
   echo "Filas disponíveis:"
-  aws sqs list-queues --region $REGION --query 'QueueUrls[]' --output text 2>/dev/null | tr '\t' '\n' | while read Q; do
-    MSGS=$(aws sqs get-queue-attributes --queue-url "$Q" --attribute-names ApproximateNumberOfMessages --region $REGION --query 'Attributes.ApproximateNumberOfMessages' --output text 2>/dev/null)
-    echo "  📨 $(basename $Q) | Mensagens: $MSGS"
+  aws sqs list-queues --region "$REGION" --query 'QueueUrls[]' --output text 2>/dev/null | tr '\t' '\n' | while read Q; do
+    MSGS=$(aws sqs get-queue-attributes --queue-url "$Q" --attribute-names ApproximateNumberOfMessages --region "$REGION" --query 'Attributes.ApproximateNumberOfMessages' --output text 2>/dev/null)
+    echo "  📨 $(basename "$Q") | Mensagens: $MSGS"
   done
   echo ""
   read -p "URL da fila: " QUEUE_URL
@@ -38,7 +38,7 @@ while true; do
     --max-number-of-messages 1 \
     --wait-time-seconds 20 \
     --attribute-names All \
-    --region $REGION \
+    --region "$REGION" \
     --output json 2>/dev/null)
 
   # Verificar se response está vazio ou sem mensagens
@@ -75,7 +75,7 @@ while true; do
   aws sqs delete-message \
     --queue-url "$QUEUE_URL" \
     --receipt-handle "$RECEIPT" \
-    --region $REGION 2>/dev/null
+    --region "$REGION" 2>/dev/null
 
   if [[ $? -eq 0 ]]; then
     echo "   ✅ Mensagem processada e excluída da fila!"

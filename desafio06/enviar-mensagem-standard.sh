@@ -3,7 +3,8 @@
 # Uso: ./enviar-mensagem-standard.sh
 
 REGION="us-east-1"
-QUEUE_URL="${QUEUE_URL:-https://sqs.us-east-1.amazonaws.com/794038217446/formacao-mensageria}"
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+QUEUE_URL="${QUEUE_URL:-https://sqs.$REGION.amazonaws.com/$ACCOUNT_ID/formacao-mensageria}"
 
 echo "=========================================="
 echo "   Enviar Mensagem - SQS Standard"
@@ -24,19 +25,19 @@ case $OPCAO in
     aws sqs send-message \
       --queue-url "$QUEUE_URL" \
       --message-body "$MSG" \
-      --region $REGION
+      --region "$REGION"
     echo "✅ Mensagem enviada!"
     ;;
 
   2)
     read -p "Quantas mensagens? " QTD
     [[ -z "$QTD" ]] && echo "❌ Quantidade obrigatória." && exit 1
-    for i in $(seq 1 $QTD); do
+    for i in $(seq 1 "$QTD"); do
       MSG="Mensagem Standard #$i - $(date '+%H:%M:%S')"
       aws sqs send-message \
         --queue-url "$QUEUE_URL" \
         --message-body "$MSG" \
-        --region $REGION \
+        --region "$REGION" \
         --output text --query 'MessageId'
       echo "  ✅ Enviada: $MSG"
     done
@@ -51,7 +52,7 @@ case $OPCAO in
     aws sqs send-message \
       --queue-url "$QUEUE_URL" \
       --message-body "$JSON_MSG" \
-      --region $REGION
+      --region "$REGION"
     echo "✅ Mensagem JSON enviada!"
     ;;
 

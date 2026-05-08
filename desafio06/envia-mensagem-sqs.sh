@@ -13,8 +13,8 @@ echo "=========================================="
 # Listar filas
 echo ""
 echo "Filas disponíveis:"
-aws sqs list-queues --region $REGION --query 'QueueUrls[]' --output text 2>/dev/null | tr '\t' '\n' | while read Q; do
-  echo "  📨 $(basename $Q)"
+aws sqs list-queues --region "$REGION" --query 'QueueUrls[]' --output text 2>/dev/null | tr '\t' '\n' | while read Q; do
+  echo "  📨 $(basename "$Q")"
 done
 
 echo ""
@@ -41,12 +41,12 @@ case $OPCAO in
         --queue-url "$QUEUE_URL" \
         --message-body "$MSG" \
         --message-group-id "$GROUP_ID" \
-        --region $REGION
+        --region "$REGION"
     else
       aws sqs send-message \
         --queue-url "$QUEUE_URL" \
         --message-body "$MSG" \
-        --region $REGION
+        --region "$REGION"
     fi
     echo "✅ Mensagem enviada!"
     ;;
@@ -55,7 +55,7 @@ case $OPCAO in
     read -p "Quantas mensagens? " QTD
     [[ -z "$QTD" ]] && echo "Erro: quantidade obrigatória." && exit 1
 
-    for i in $(seq 1 $QTD); do
+    for i in $(seq 1 "$QTD"); do
       MSG="Mensagem #$i - $(date '+%H:%M:%S')"
       if [[ "$QUEUE_URL" == *.fifo ]]; then
         aws sqs send-message \
@@ -63,12 +63,12 @@ case $OPCAO in
           --message-body "$MSG" \
           --message-group-id "lote" \
           --message-deduplication-id "msg-$i-$(date +%s%N)" \
-          --region $REGION --output text --query 'MessageId'
+          --region "$REGION" --output text --query 'MessageId'
       else
         aws sqs send-message \
           --queue-url "$QUEUE_URL" \
           --message-body "$MSG" \
-          --region $REGION --output text --query 'MessageId'
+          --region "$REGION" --output text --query 'MessageId'
       fi
       echo "  ✅ Enviada: $MSG"
     done
@@ -88,12 +88,12 @@ case $OPCAO in
         --queue-url "$QUEUE_URL" \
         --message-body "$JSON_MSG" \
         --message-group-id "$GROUP_ID" \
-        --region $REGION
+        --region "$REGION"
     else
       aws sqs send-message \
         --queue-url "$QUEUE_URL" \
         --message-body "$JSON_MSG" \
-        --region $REGION
+        --region "$REGION"
     fi
     echo "✅ Mensagem JSON enviada!"
     ;;
