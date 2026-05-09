@@ -5,7 +5,8 @@
 # 
 # Este script instala e configura:
 #   1. AWS CLI v2
-#   2. Kiro CLI
+#   2. Node.js 20 LTS (necessário para build da landing page)
+#   3. Kiro CLI
 #
 # Uso: bash install-setup.sh
 # ============================================================
@@ -140,9 +141,88 @@ aws --version
 echo ""
 
 # ============================================================
-# ETAPA 3: Instalar Kiro CLI
+# ETAPA 3: Instalar Node.js (necessário para o deploy da landing page)
 # ============================================================
-print_header "🤖 ETAPA 3: Instalando Kiro CLI"
+print_header "📦 ETAPA 3: Instalando Node.js 20 LTS"
+
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node --version)
+    NODE_MAJOR=$(echo "$NODE_VERSION" | sed 's/v//' | cut -d. -f1)
+    
+    if [ "$NODE_MAJOR" -ge 18 ]; then
+        print_success "Node.js já instalado: $NODE_VERSION (compatível)"
+        echo ""
+        read -p "Deseja reinstalar/atualizar? (s/n): " REINSTALL_NODE
+        if [[ "$REINSTALL_NODE" != "s" && "$REINSTALL_NODE" != "S" ]]; then
+            print_info "Pulando instalação do Node.js..."
+        else
+            print_step "Atualizando Node.js..."
+            if [[ "$OS" == "macos" ]]; then
+                if command -v brew &> /dev/null; then
+                    brew install node@20
+                else
+                    curl -fsSL https://nodejs.org/dist/v20.18.0/node-v20.18.0.pkg -o node.pkg
+                    sudo installer -pkg node.pkg -target /
+                    rm -f node.pkg
+                fi
+            elif [[ "$OS" == "linux" ]]; then
+                curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+                sudo apt-get install -y nodejs
+            fi
+            print_success "Node.js atualizado!"
+        fi
+    else
+        print_warning "Node.js $NODE_VERSION é muito antigo. Precisa ser 18+."
+        print_step "Instalando Node.js 20 LTS..."
+        if [[ "$OS" == "macos" ]]; then
+            if command -v brew &> /dev/null; then
+                brew install node@20
+            else
+                curl -fsSL https://nodejs.org/dist/v20.18.0/node-v20.18.0.pkg -o node.pkg
+                sudo installer -pkg node.pkg -target /
+                rm -f node.pkg
+            fi
+        elif [[ "$OS" == "linux" ]]; then
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        fi
+        print_success "Node.js 20 LTS instalado!"
+    fi
+else
+    print_step "Instalando Node.js 20 LTS..."
+    
+    if [[ "$OS" == "macos" ]]; then
+        if command -v brew &> /dev/null; then
+            brew install node@20
+        else
+            print_step "Baixando instalador do Node.js..."
+            curl -fsSL https://nodejs.org/dist/v20.18.0/node-v20.18.0.pkg -o node.pkg
+            sudo installer -pkg node.pkg -target /
+            rm -f node.pkg
+        fi
+    elif [[ "$OS" == "linux" ]]; then
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    fi
+    
+    print_success "Node.js 20 LTS instalado com sucesso!"
+fi
+
+# Verificação
+echo ""
+print_step "Verificando instalação do Node.js..."
+if command -v node &> /dev/null; then
+    echo "  Node.js: $(node --version)"
+    echo "  npm:     $(npm --version)"
+else
+    print_warning "Node.js instalado. Reinicie o terminal se não aparecer."
+fi
+echo ""
+
+# ============================================================
+# ETAPA 4: Instalar Kiro CLI
+# ============================================================
+print_header "🤖 ETAPA 4: Instalando Kiro CLI"
 
 # Verificar se já está instalado
 if command -v kiro &> /dev/null; then
@@ -182,9 +262,9 @@ else
 fi
 
 # ============================================================
-# ETAPA 4: Configurar credenciais AWS
+# ETAPA 5: Configurar credenciais AWS
 # ============================================================
-print_header "🔑 ETAPA 4: Configuração de Credenciais AWS"
+print_header "🔑 ETAPA 5: Configuração de Credenciais AWS"
 
 echo -e "${YELLOW}Agora vamos configurar suas credenciais AWS.${NC}"
 echo ""
@@ -206,9 +286,9 @@ else
 fi
 
 # ============================================================
-# ETAPA 5: Autenticar no Kiro CLI
+# ETAPA 6: Autenticar no Kiro CLI
 # ============================================================
-print_header "🔐 ETAPA 5: Autenticação no Kiro CLI"
+print_header "🔐 ETAPA 6: Autenticação no Kiro CLI"
 
 echo -e "${YELLOW}O Kiro CLI precisa de autenticação via AWS Builder ID (gratuito).${NC}"
 echo ""
@@ -230,9 +310,9 @@ else
 fi
 
 # ============================================================
-# ETAPA 6: Verificação Final
+# ETAPA 7: Verificação Final
 # ============================================================
-print_header "🎯 ETAPA 6: Verificação Final — Check Completo"
+print_header "🎯 ETAPA 7: Verificação Final — Check Completo"
 
 echo ""
 ERRORS=0
@@ -255,6 +335,17 @@ if aws sts get-caller-identity &> /dev/null; then
 else
     print_warning "Credenciais AWS não configuradas ou inválidas"
     print_info "Execute: aws configure"
+fi
+
+# Check Node.js
+print_step "Verificando Node.js..."
+if command -v node &> /dev/null; then
+    NODE_VER=$(node --version)
+    NPM_VER=$(npm --version 2>/dev/null || echo "não encontrado")
+    print_success "Node.js: $NODE_VER | npm: $NPM_VER"
+else
+    print_warning "Node.js não encontrado no PATH atual"
+    print_info "Reinicie o terminal e tente: node --version"
 fi
 
 # Check Kiro CLI
